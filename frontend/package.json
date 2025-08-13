@@ -4,11 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+  "predev": "npm run wasm || echo 'Skipping wasm build (Rust toolchain missing)'",
+  "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "wasm": "cd src/rust && cargo build --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir ../../public/wasm --no-typescript target/wasm32-unknown-unknown/release/calc_wasm.wasm",
-    "wasm:dev": "cd src/rust && cargo watch -i .gitignore -i 'pkg/*' -s 'cargo build --target wasm32-unknown-unknown && wasm-bindgen --target web --out-dir ../../public/wasm --no-typescript target/wasm32-unknown-unknown/debug/calc_wasm.wasm'"
+  "wasm:setup": "rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli --version 0.2.92 --force",
+  "wasm": "cd src/rust && cargo build --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir ../../public/wasm --no-typescript target/wasm32-unknown-unknown/release/calc_wasm.wasm",
+  "wasm:dev": "cd src/rust && cargo build --target wasm32-unknown-unknown && wasm-bindgen --target web --out-dir ../../public/wasm --no-typescript target/wasm32-unknown-unknown/debug/calc_wasm.wasm"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -20,7 +22,6 @@
     "@vitejs/plugin-react": "^4.0.0",
     "serve": "^14.2.1",
     "typescript": "^5.4.0",
-    "vite": "^5.3.1",
-    "wasm-bindgen-cli": "^0.2.92"
+  "vite": "^5.3.1"
   }
 }

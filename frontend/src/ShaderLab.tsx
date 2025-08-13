@@ -6,6 +6,8 @@ export const ShaderLab: React.FC = () => {
   const [prompt, setPrompt] = useState('A pulsating purple plasma');
   const [code, setCode] = useState<string>('');
   const [status, setStatus] = useState<string>('Idle');
+  const [errorDetails, setErrorDetails] = useState<string>('');
+  const [showError, setShowError] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const glRef = useRef<WebGLRenderingContext | null>(null);
   const programRef = useRef<WebGLProgram | null>(null);
@@ -22,12 +24,19 @@ export const ShaderLab: React.FC = () => {
 
   const fetchShader = async () => {
     setStatus('Requesting shader...');
+    setErrorDetails('');
+    setShowError(false);
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + '/api/shader', {
+      const base = (import.meta as any).env?.VITE_API_URL || window.location.origin;
+      const res = await fetch(base + '/api/shader', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
+      if(!res.ok) {
+        const bodyText = await res.text();
+        throw new Error(`HTTP ${res.status} ${res.statusText}\n${bodyText}`);
+      }
       const data: ShaderResponse = await res.json();
       setCode(data.shader);
       setStatus('Compiling');
@@ -36,6 +45,7 @@ export const ShaderLab: React.FC = () => {
     } catch (e:any) {
       console.error(e);
       setStatus('Error');
+      setErrorDetails(e?.stack || e?.message || String(e));
     }
   };
 
@@ -47,8 +57,11 @@ export const ShaderLab: React.FC = () => {
     const vShader = gl.createShader(gl.VERTEX_SHADER)!; gl.shaderSource(vShader, vertexSrc); gl.compileShader(vShader);
     const fShader = gl.createShader(gl.FRAGMENT_SHADER)!; gl.shaderSource(fShader, fragmentSrc); gl.compileShader(fShader);
     if(!gl.getShaderParameter(fShader, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(fShader));
+      const log = gl.getShaderInfoLog(fShader) || 'Unknown compile error';
+      console.error(log);
       setStatus('Shader compile error');
+      setErrorDetails(log);
+      setShowError(true);
       return;
     }
     const program = gl.createProgram()!; gl.attachShader(program, vShader); gl.attachShader(program, fShader); gl.linkProgram(program);
@@ -68,7 +81,8 @@ export const ShaderLab: React.FC = () => {
       gl.enableVertexAttribArray(positionLocation);
       gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
       const tLoc = gl.getUniformLocation(program, 'u_time');
-      if(tLoc) gl.uniform1f(tLoc, (time - startTimeRef.current) / 1000.0);
+  const started = startTimeRef.current || performance.now();
+  if(tLoc) gl.uniform1f(tLoc, (time - started) / 1000.0);
       const rLoc = gl.getUniformLocation(program, 'u_resolution');
       if(rLoc) gl.uniform2f(rLoc, gl.drawingBufferWidth, gl.drawingBufferHeight);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -77,19 +91,42 @@ export const ShaderLab: React.FC = () => {
     requestAnimationFrame(render);
   };
 
+  const hasError = status.toLowerCase().includes('error');
   return (
-    <div>
-      <h2>Shader Lab</h2>
-      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
-        <input style={{flex:1,minWidth:280}} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Describe an effect" />
-        <button onClick={fetchShader}>Generate Shader</button>
-        <span>{status}</span>
+    <section className="panel">
+      <div className="panel-header">
+        <h2 className="panel-title">Shader Lab</h2>
+        <div style={{display:'flex', gap:'.5rem', alignItems:'center'}}>
+          <span className={"badge "+(hasError? 'badge-warn':'badge-info')}>{status}</span>
+          { (errorDetails || hasError) && (
+            <button type="button" className="btn" onClick={() => setShowError(!showError)}>
+              {showError ? 'Hide Error' : 'Show Error'}
+            </button>
+          ) }
+        </div>
       </div>
-      <div style={{display:'flex', gap:16, marginTop:12}}>
-        <canvas ref={canvasRef} width={500} height={300} style={{border:'1px solid #444'}} />
-        <pre style={{background:'#111', color:'#0f0', padding:12, flex:1, minHeight:300, overflow:'auto'}}>{code}</pre>
+      <div className="shader-controls">
+        <input className="prompt" value={prompt} onChange={(e: any)=>setPrompt(e.target.value)} placeholder="Describe an effect (e.g. swirling plasma, neon waves)" />
+        <button className="btn primary" onClick={fetchShader}>Generate</button>
       </div>
-    </div>
+      <div className="shader-layout">
+        <div className="canvas-wrap">
+          <canvas ref={canvasRef} width={640} height={360} />
+        </div>
+        <div className="code-wrap">
+          <pre>{code || 'Shader code will appear here.'}</pre>
+        </div>
+      </div>
+      {showError && errorDetails && (
+        <div className="error-details" role="alert" aria-live="assertive">
+          <div className="error-details-header">
+            <strong>Error Details</strong>
+            <button className="btn" onClick={()=>setShowError(false)}>Close</button>
+          </div>
+          <pre>{errorDetails}</pre>
+        </div>
+      )}
+    </section>
   );
 };
 
