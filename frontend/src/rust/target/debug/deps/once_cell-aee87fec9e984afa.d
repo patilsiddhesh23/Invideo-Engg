@@ -1,0 +1,7 @@
+D:\Assignment\frontend\src\rust\target\debug\deps\once_cell-aee87fec9e984afa.d: C:\Users\patil\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\once_cell-1.21.3\src\lib.rs
+
+D:\Assignment\frontend\src\rust\target\debug\deps\libonce_cell-aee87fec9e984afa.rlib: C:\Users\patil\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\once_cell-1.21.3\src\lib.rs
+
+D:\Assignment\frontend\src\rust\target\debug\deps\libonce_cell-aee87fec9e984afa.rmeta: C:\Users\patil\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\once_cell-1.21.3\src\lib.rs
+
+C:\Users\patil\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\once_cell-1.21.3\src\lib.rs:
