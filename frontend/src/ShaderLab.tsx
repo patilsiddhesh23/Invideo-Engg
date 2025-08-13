@@ -18,7 +18,6 @@ export const ShaderLab: React.FC = () => {
     const gl = canvasRef.current.getContext('webgl');
     if(!gl) { setStatus('WebGL not supported'); return; }
     glRef.current = gl;
-    // Default shader until first fetch.
     compileAndRun(gl, defaultFragmentShader);    
   }, []);
 
