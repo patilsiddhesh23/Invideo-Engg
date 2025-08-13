@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-// Will be provided by wasm-bindgen output (attached to window or importable dynamically)
+
 interface WasmExports {
   add(a: number, b: number): number;
   sub(a: number, b: number): number;
@@ -24,10 +24,10 @@ export const Calculator: React.FC = () => {
       const wasmJsPath = '/wasm/calc_wasm.js';
       let loadedWasm = false;
       try {
-        // Check if wasm glue file exists (HEAD request avoids throwing during Vite transform phase)
+        
         const head = await fetch(wasmJsPath, { method: 'HEAD' });
         if (head.ok) {
-          const mod: any = await import(/* @vite-ignore */ wasmJsPath);
+          const mod: any = await import(wasmJsPath);
           if (typeof mod.default === 'function') {
             await mod.default();
           }
@@ -43,11 +43,11 @@ export const Calculator: React.FC = () => {
           }
         }
       } catch (e) {
-        // Silent fallback; we'll supply JS implementation below.
+        
         console.warn('WASM unavailable, using JS fallback', e);
       }
       if (!loadedWasm) {
-        // Fallback pure JS versions (still satisfy demo & tests)
+        
         const fibJs = (k: number): number => (k<=1? k : fibJs(k-1) + fibJs(k-2));
         window.wasmCalc = {
           add: (x,y)=>x+y,
